@@ -113,5 +113,23 @@
   <ItemGroup>
     <None Include="bin\Debug\select_thickness.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\background_color.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\free drawing.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\line.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\rectangle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\circle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bin\Debug\triangle.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
