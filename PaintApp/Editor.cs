@@ -56,6 +56,11 @@ namespace PaintApp
             toolTip.SetToolTip(this.exit, "Exit");
             toolTip.SetToolTip(this.clear_all, "Clear canvas");
             toolTip.SetToolTip(this.change_background, "Pick canvas color");
+            toolTip.SetToolTip(this.free, "Draw freely using mouse");
+            toolTip.SetToolTip(this.line, "Add line");
+            toolTip.SetToolTip(this.rectangle, "Add rectangle");
+            toolTip.SetToolTip(this.circle, "Add circle");
+            toolTip.SetToolTip(this.triangle, "Add triangle");
         }
 
         private void save_Click(object sender, EventArgs e)
@@ -114,18 +119,25 @@ namespace PaintApp
             switch (selected_tool)
             {
                 case "line":
-                    g.DrawLine(new Pen(color),startpoint, endpoint);
+                    g.DrawLine(new Pen(color,thickness),startpoint, endpoint);
                     break;
                 case "circle":
-                    g.DrawEllipse(new Pen(color), new Rectangle(startpoint, new Size(endpoint.X-startpoint.X,
+                    g.DrawEllipse(new Pen(color,thickness), new Rectangle(startpoint, new Size(endpoint.X-startpoint.X,
                         endpoint.Y-startpoint.Y)));
                     break;
                 case "rectangle":
-                    g.DrawRectangle(new Pen(color), new Rectangle(startpoint, new Size(endpoint.X - startpoint.X,
+                    g.DrawRectangle(new Pen(color, thickness), new Rectangle(startpoint, new Size(endpoint.X - startpoint.X,
                         endpoint.Y - startpoint.Y)));
                     break;
                 case "triangle":
-                    break;
+                    {
+                        Point[] corners = new Point[3];
+                        corners[0] = startpoint;
+                        corners[1] = endpoint;
+                        corners[2] = new Point(startpoint.X - (endpoint.X - startpoint.X), endpoint.Y);
+                        g.DrawPolygon(new Pen(color, thickness), corners);
+                        break;
+                    }
                 default:
                     break;
             }
