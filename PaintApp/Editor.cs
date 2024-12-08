@@ -14,26 +14,27 @@ namespace PaintApp
     public partial class Editor : Form
     {
         Bitmap canvas_img;
-        bool unsaved_changes = false;
         Color color=Color.Black;
         Point startpoint, endpoint;
         Graphics g;
         bool free_drawing = false;
         int thickness=2;
         string selected_tool; //what drawing tool the user has currently selected
+        bool imported=false;
 
         public Editor()
         {
             InitializeComponent();
             canvas_img = new Bitmap(canvas.Width, canvas.Height);   
-            g = canvas.CreateGraphics();
+            g = Graphics.FromImage(canvas_img);
         }
 
         public Editor(string file)
         {
             InitializeComponent();
             canvas_img = new Bitmap(Image.FromFile(Path.GetFullPath(file)), canvas.Size);
-            g = canvas.CreateGraphics();
+            g = Graphics.FromImage(canvas_img);
+            imported = true;
 
         }
 
@@ -79,10 +80,7 @@ namespace PaintApp
         private void exit_Click(object sender, EventArgs e)
         {
             DialogResult msg;
-            if (!unsaved_changes)
-                msg = MessageBox.Show("Are you sure you want to exit the editor?", "Exit", MessageBoxButtons.OKCancel);
-            else
-                msg = MessageBox.Show("You have unsaved changes. Do you want to discard current state of project?", "Exit", MessageBoxButtons.OKCancel);
+               msg = MessageBox.Show("Are you sure you want to exit the editor? All unsaved chages will be lost.", "Exit", MessageBoxButtons.OKCancel);
             if (msg == DialogResult.OK)
                 this.Close();
         }
@@ -120,24 +118,26 @@ namespace PaintApp
             {
                 case "line":
                     g.DrawLine(new Pen(color,thickness),startpoint, endpoint);
+                    canvas.Image = canvas_img;
                     break;
                 case "circle":
                     g.DrawEllipse(new Pen(color,thickness), new Rectangle(startpoint, new Size(endpoint.X-startpoint.X,
                         endpoint.Y-startpoint.Y)));
+                    canvas.Image = canvas_img;
                     break;
                 case "rectangle":
                     g.DrawRectangle(new Pen(color, thickness), new Rectangle(startpoint, new Size(endpoint.X - startpoint.X,
                         endpoint.Y - startpoint.Y)));
+                    canvas.Image = canvas_img;
                     break;
                 case "triangle":
-                    {
-                        Point[] corners = new Point[3];
-                        corners[0] = startpoint;
-                        corners[1] = endpoint;
-                        corners[2] = new Point(startpoint.X - (endpoint.X - startpoint.X), endpoint.Y);
-                        g.DrawPolygon(new Pen(color, thickness), corners);
-                        break;
-                    }
+                    Point[] corners = new Point[3];
+                    corners[0] = startpoint;
+                    corners[1] = endpoint;
+                    corners[2] = new Point(startpoint.X - (endpoint.X - startpoint.X), endpoint.Y);
+                    g.DrawPolygon(new Pen(color, thickness), corners);
+                    canvas.Image = canvas_img;
+                    break;
                 default:
                     break;
             }
@@ -145,7 +145,20 @@ namespace PaintApp
 
         private void brush_thickness_Click(object sender, EventArgs e)
         {
+            Control c = sender as Control;
             trackBar1.Visible = !trackBar1.Visible;
+            if(trackBar1.Visible)
+            {
+                Graphics h = this.CreateGraphics();
+                h.Clear(Color.Black);//only one button can be selected at a time
+                h.FillRectangle(new SolidBrush(Color.Purple), new Rectangle(new Point(c.Location.X - 5, c.Location.Y - 5)
+                    , new Size(c.Width + 10, c.Height + 10)));
+            }
+            else
+            {
+                Graphics h = this.CreateGraphics();
+                h.Clear(Color.Black);//only one button can be selected at a time
+            }
         }
 
         private void trackBar1_Scroll(object sender, EventArgs e)
@@ -159,6 +172,7 @@ namespace PaintApp
                 msg = MessageBox.Show("Are you sure you want to reset canvas?", "Exit", MessageBoxButtons.OKCancel);
             if (msg == DialogResult.OK)
                 g.Clear(Color.White);
+            canvas.Image = canvas_img;
         }
 
         private void eraser_Click(object sender, EventArgs e)
@@ -168,11 +182,19 @@ namespace PaintApp
 
         private void change_background_Click(object sender, EventArgs e)
         {
-            colorDialog2.ShowDialog();
-            if (colorDialog2.Color != null)
-                canvas.BackColor = colorDialog2.Color;
+            if (imported == false)
+            {
+                colorDialog2.ShowDialog();
+                if (colorDialog2.Color != null)
+                    canvas.BackColor = colorDialog2.Color;
+                else
+                    canvas.BackColor = Color.White;
+                canvas.Image = canvas_img;
+            }
             else
-                canvas.BackColor = Color.White;
+            {
+                MessageBox.Show("Changing the background of an imported project is not currently supported");
+            }
         }
 
         private void selected_tool_changed(object sender, EventArgs e)
@@ -188,7 +210,10 @@ namespace PaintApp
         private void canvas_MouseMove(object sender, MouseEventArgs e)
         {
             if (free_drawing)
+            {
                 g.FillEllipse(new SolidBrush(color), new Rectangle(new Point(e.X, e.Y), new Size(thickness, thickness)));
+                canvas.Image = canvas_img;
+            }
         }
     }
 }
