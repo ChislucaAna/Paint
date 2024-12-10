@@ -13,29 +13,62 @@ namespace PaintApp
 {
     public partial class Editor : Form
     {
-        Bitmap canvas_img;
+        Bitmap canvas_img,original_canvas_img;
         Color color=Color.Black;
         Point startpoint, endpoint;
         Graphics g;
+        Graphics canvas_graphics;
         bool free_drawing = false;
         int thickness=2;
         string selected_tool; //what drawing tool the user has currently selected
         bool imported=false;
+        double zoom_level = 1; //current state of zoom in/out in the editor canvas
 
         public Editor()
         {
             InitializeComponent();
+
             canvas_img = new Bitmap(canvas.Width, canvas.Height);   
             g = Graphics.FromImage(canvas_img);
+
+            canvas.MouseWheel += canvas_MouseWheel;
+            canvas_graphics = canvas.CreateGraphics();
         }
 
         public Editor(string file)
         {
             InitializeComponent();
+
             canvas_img = new Bitmap(Image.FromFile(Path.GetFullPath(file)), canvas.Size);
             g = Graphics.FromImage(canvas_img);
-            imported = true;
 
+            imported = true;
+            canvas.MouseWheel += canvas_MouseWheel;
+            canvas_graphics = canvas.CreateGraphics();
+
+        }
+
+        private void canvas_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (e.Delta > 0)
+                zoom_in_to(e.X, e.Y);
+            else
+                zoom_out_from(e.X, e.Y);
+        }
+
+        public void zoom_in_to(int centerx, int centery)
+        {
+            canvas_img = new Bitmap(canvas_img,new Size(Convert.ToInt32(canvas_img.Width*1.1),Convert.ToInt32(canvas_img.Height*1.1)));
+            canvas_graphics.Clear(Color.White);
+            canvas_graphics.DrawImage(canvas_img, Convert.ToInt32(centerx*1.1-canvas_img.Width/2),
+                Convert.ToInt32(1.1*centery - canvas_img.Height / 2));
+        }
+
+        public void zoom_out_from(int centerx, int centery)
+        {
+            canvas_img = new Bitmap(canvas_img, new Size(Convert.ToInt32(canvas_img.Width / 1.1), Convert.ToInt32(canvas_img.Height / 1.1)));
+            canvas_graphics.Clear(Color.White);
+            canvas_graphics.DrawImage(canvas_img, centerx - canvas_img.Width / 2, centery - canvas_img.Height / 2);
         }
 
         private void Editor_Load(object sender, EventArgs e)
@@ -118,17 +151,20 @@ namespace PaintApp
             {
                 case "line":
                     g.DrawLine(new Pen(color,thickness),startpoint, endpoint);
-                    canvas.Image = canvas_img;
+                    canvas_graphics.Clear(Color.White);
+                    canvas_graphics.DrawImage(canvas_img, 0, 0);
                     break;
                 case "circle":
                     g.DrawEllipse(new Pen(color,thickness), new Rectangle(startpoint, new Size(endpoint.X-startpoint.X,
                         endpoint.Y-startpoint.Y)));
-                    canvas.Image = canvas_img;
+                    canvas_graphics.Clear(Color.White);
+                    canvas_graphics.DrawImage(canvas_img, 0, 0);
                     break;
                 case "rectangle":
                     g.DrawRectangle(new Pen(color, thickness), new Rectangle(startpoint, new Size(endpoint.X - startpoint.X,
                         endpoint.Y - startpoint.Y)));
-                    canvas.Image = canvas_img;
+                    canvas_graphics.Clear(Color.White);
+                    canvas_graphics.DrawImage(canvas_img, 0, 0);
                     break;
                 case "triangle":
                     Point[] corners = new Point[3];
@@ -136,7 +172,8 @@ namespace PaintApp
                     corners[1] = endpoint;
                     corners[2] = new Point(startpoint.X - (endpoint.X - startpoint.X), endpoint.Y);
                     g.DrawPolygon(new Pen(color, thickness), corners);
-                    canvas.Image = canvas_img;
+                    canvas_graphics.Clear(Color.White);
+                    canvas_graphics.DrawImage(canvas_img, 0, 0);
                     break;
                 default:
                     break;
@@ -172,7 +209,8 @@ namespace PaintApp
                 msg = MessageBox.Show("Are you sure you want to reset canvas?", "Exit", MessageBoxButtons.OKCancel);
             if (msg == DialogResult.OK)
                 g.Clear(Color.White);
-            canvas.Image = canvas_img;
+            canvas_graphics.Clear(Color.White);
+            canvas_graphics.DrawImage(canvas_img, 0, 0);
         }
 
         private void eraser_Click(object sender, EventArgs e)
@@ -189,7 +227,8 @@ namespace PaintApp
                     canvas.BackColor = colorDialog2.Color;
                 else
                     canvas.BackColor = Color.White;
-                canvas.Image = canvas_img;
+                canvas_graphics.Clear(Color.White);
+                canvas_graphics.DrawImage(canvas_img, 0, 0);
             }
             else
             {
@@ -212,7 +251,8 @@ namespace PaintApp
             if (free_drawing)
             {
                 g.FillEllipse(new SolidBrush(color), new Rectangle(new Point(e.X, e.Y), new Size(thickness, thickness)));
-                canvas.Image = canvas_img;
+                canvas_graphics.Clear(Color.White);
+                canvas_graphics.DrawImage(canvas_img, 0, 0);
             }
         }
     }
